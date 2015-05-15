@@ -16,7 +16,12 @@ let app = express(),
   config = requireDir('./config', {recurse: true}),
   port = process.env.PORT || 8000
 
-passportMiddleware.configure(config.auth[NODE_ENV])
+
+  console.log("><index config", config)
+
+  // let authConfig = require('./config/auth')
+
+passportMiddleware.configure()
 app.passport = passportMiddleware.passport
 
 // connect to the database
@@ -26,7 +31,7 @@ mongoose.connect(config.database[NODE_ENV].url)
 app.use(morgan('dev')) // log every request to the console
 app.use(cookieParser('ilovethenodejs')) // read cookies (needed for auth)
 app.use(bodyParser.json()) // get information from html forms
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({ extended: true  }))
 
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs') // set up ejs for templating

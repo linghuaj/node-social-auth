@@ -1,31 +1,42 @@
 let passport = require('passport')
+// let LocalStrategy = require('passport-local').Strategy
+let FacebookStrategy = require('passport-facebook').Strategy
 let nodeifyit = require('nodeifyit')
+let User = require('../models/user')
+//TODO: load from indexjs and pass in from function instead
+let config = require('../../config/auth').dev
+
+console.log(">< config", config)
+
 require('songbird')
 
-function useExternalPassportStrategy(OauthStrategy, config, field) {
-  config.passReqToCallback = true
-  // passport.use(new OauthStrategy(config, nodeifyit(authCB, {spread: true}))
+function useExternalPassportStrategy(OauthStrategy, config, accountType) {
+    config.passReqToCallback = true
+    passport.use(new OauthStrategy(config, nodeifyit(authCB, {spread: true})))
+    console.log(">< facebook strategy")
 
-  // async authCB(req, token, _ignored_, account) {
-  //     // 1. Load user from store
-  //     // 2. If req.user exists, we're authorizing (connecting an account)
-  //     // 2a. Ensure it's not associated with another account
-  //     // 2b. Link account
-  //     // 3. If not, we're authenticating (logging in)
-  //     // 3a. If user exists, we're logging in via the 3rd party account
-  //     // 3b. Otherwise create a user associated with the 3rd party account
-  // }
+    async function authCB(req, token, _ignored_, account) {
+      console.log(">< account id", account.id)
+        // Your generic 3rd-party passport strategy implementation here
+    }
 }
 
-function configure(config) {
+
+function configure() {
+  // console.log(">< config", config)
   // Required for session support / persistent login sessions
-  passport.serializeUser(nodeifyit(async (user) => {
-    throw new Erro('Not implemented.')
+  passport.serializeUser(nodeifyit(async (user) => user.id))
+  passport.deserializeUser(nodeifyit(async (id) => {
+    return await User.promise.findById(id)
   }))
 
-  passport.deserializeUser(nodeifyit(async (user) => {
-    throw new Erro('Not implemented.')
-  }))
+
+  useExternalPassportStrategy(FacebookStrategy, {
+      clientID: config.facebook.consumerKey,
+      clientSecret: config.facebook.consumerSecret,
+      callbackURL: config.facebook.callbackUrl
+  }, 'facebook')
+
 
   // useExternalPassportStrategy(LinkedInStrategy, {...}, 'linkedin')
   // useExternalPassportStrategy(LinkedInStrategy, {...}, 'facebook')
@@ -36,5 +47,19 @@ function configure(config) {
 
   return passport
 }
+
+
+// passport.use('local-login', new LocalStrategy({
+//        // ...
+//    }, nodeifyit(async (req, email, password) => {
+//        // ...
+//    }, {spread: true}))
+
+// passport.use('local-signup', new LocalStrategy({
+//        // ...
+//    }, nodeifyit(async (req, email, password) => {
+//        // ...
+//    }, {spread: true}))
+
 
 module.exports = {passport, configure}
